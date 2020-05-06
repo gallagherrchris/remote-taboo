@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import sequelize from '../server/lib/db';
+const sequelize = require('../server/lib/db');
 
-import Game from '../server/models/game';
-import Player from '../server/models/player';
-import Card from '../server/models/card';
+const Game = require('../server/models/game');
+const Player = require('../server/models/player');
+const Card = require('../server/models/card');
 
 sequelize.sync();
