@@ -1,6 +1,7 @@
-import sequelize, { Sequelize } from '../lib/db';
+const db = require('../lib/db');
+const { Sequelize } = db;
 
-const Game = sequelize.define('game', {
+const Game = db.define('game', {
   id: {
     type: Sequelize.STRING,
     allowNull: false,
@@ -12,4 +13,4 @@ const Game = sequelize.define('game', {
   }
 });
 
-export default Game;
+module.exports = Game;

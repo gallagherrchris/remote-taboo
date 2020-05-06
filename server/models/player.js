@@ -1,6 +1,7 @@
-import sequelize, { Sequelize } from '../lib/db';
+const db = require('../lib/db');
+const { Sequelize } = db;
 
-const Player = sequelize.define('player', {
+const Player = db.define('player', {
   id: {
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4,
@@ -16,4 +17,4 @@ const Player = sequelize.define('player', {
   },
 });
 
-export default Player;
+module.exports = Player;

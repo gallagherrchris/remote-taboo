@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 
-const singleton = new Sequelize('postgres://user:pass@example.com:5432/dbname');
-singleton.Sequelize = Sequelize;
+const db = new Sequelize('postgres://user:pass@example.com:5432/dbname');
+db.Sequelize = Sequelize;
 
-export { Sequelize, singleton as default };
+module.exports = db;
