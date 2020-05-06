@@ -9,10 +9,12 @@ const Card = db.define('card', {
     allowNull: false
   },
   word: {
-    type: Sequelize.STRING
+    type: Sequelize.STRING,
+    allowNull: false
   },
   taboo: {
-    type: Sequelize.STRING
+    type: Sequelize.STRING,
+    allowNull: false
   }
 });
 

@@ -11,7 +11,7 @@ const Player = db.define('player', {
   game_id: {
     type: Sequelize.STRING,
     references: {
-      model: 'game',
+      model: 'games',
       key: 'id'
     }
   },
