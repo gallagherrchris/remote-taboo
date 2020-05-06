@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+const { db } = require('../scripts/lib/db');
+
+db.sync();
