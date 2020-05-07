@@ -1,6 +1,10 @@
+const path = require('path');
 const express = require('express');
 const favicon = require('express-favicon');
-const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
+
+const socketHandler = require('./lib/socket');
 
 const port = process.env.PORT || 8080;
 const app = express();
@@ -13,11 +17,28 @@ app.use(express.static(path.join(__dirname, '..')));
 app.use(express.static(path.join(appRoot)));
 
 app.get('/ping', function (req, res) {
- return res.send('pong');
+  return res.send('pong');
 });
 
 app.get('/*', function (req, res) {
   res.sendFile(path.join(appRoot, 'index.html'));
 });
 
-app.listen(port);
+const httpServer = http.createServer(app);
+const wss = new WebSocket.Server({
+  server: httpServer,
+  clientTracking: true
+});
+wss.broadcast = (message) => {
+  for(const client of wss.clients) {
+    if(client.readyState === WebSocket.OPEN){
+      client.send(message);
+    }
+  }
+};
+
+wss.on('connection', socketHandler.onConnection.bind(null, wss));
+const clientPoll = socketHandler.pollClients(wss);
+wss.on('close', socketHandler.onClose.bind(null, clientPoll));
+
+httpServer.listen(port, () => console.log('Listening on port', port));
