@@ -32,7 +32,7 @@ const wss = new WebSocket.Server({
 wss.broadcast = (message) => {
   for(const client of wss.clients) {
     if(client.readyState === WebSocket.OPEN){
-      client.send(message);
+      client.send(JSON.stringify(message));
     }
   }
 };

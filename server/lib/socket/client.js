@@ -1,4 +1,8 @@
 const WebSocket = require('ws');
+const utils = require('../utils');
+const cards = require('../cards').map((card, index) => Object.assign(card, { index }));
+
+const LENGTH_OF_ROUND = 10 * 1000; // 1 minute in ms
 
 const addTeamMember = (socket, team, name) => {
   for (const client of socket.server.clients) {
@@ -13,20 +17,69 @@ const addTeamMember = (socket, team, name) => {
   socket.gameData = { team, name };
 };
 
-const groupByTeams = (clients) => {
-  const teamMap = {};
-  for (const client of clients) {
-    if (client.readyState !== WebSocket.OPEN || !client.gameData) {
-      continue;
+const groupByTeams = ([...clients]) => {
+  return clients.reduce((teams, cur) => {
+    if (cur.readyState !== WebSocket.OPEN || !cur.gameData) {
+      return teams;
     }
-    if (!teamMap[client.gameData.team]) {
-      teamMap[client.gameData.team] = [];
+    const existingTeamIndex = teams.findIndex(team => team.name === cur.gameData.team);
+    if (existingTeamIndex >= 0) {
+      teams[existingTeamIndex] = Object.assign({}, teams[existingTeamIndex], {
+        players: teams[existingTeamIndex].players.concat(cur.name)
+      });
+      return teams;
+    } else {
+      return teams.concat({
+        name: cur.gameData.team,
+        players: [cur.gameData.name],
+        correct: [],
+        skipped: []
+      });
     }
-    client.gameData.position = teamMap[client.gameData.team].length;
-    teamMap[client.gameData.team].push(client);
-  }
-  return teamMap;
+  }, []);
 };
+
+const synchronizeGameState = (server) => {
+  const { roundInterval, ...data } = server.gameState;
+  server.broadcast({ type: 'GAME_STATE', data });
+};
+
+const drawCard = (gameState) => {
+  const usedCards = gameState.teams.reduce((used, curTeam) => used.concat(curTeam.correct.concat(curTeam.skipped)), []);
+  const availableCards = cards.filter((card) => !usedCards.includes(card.index));
+  if (availableCards.length < 1) {
+    console.error('Out of cards');
+    return null;
+  }
+  return Object.assign({}, gameState, {
+    card: utils.getRandomElement(availableCards)
+  });
+};
+
+const startRound = (server) => (
+  setInterval(() => {
+    const { gameState } = server;
+    const timeLeft = gameState.roundEnd - Date.now();
+    if (timeLeft < 1) {
+      clearInterval(gameState.roundInterval);
+      const nextIndex = gameState.curTeam + 1 >= gameState.teams.length ? 0 : gameState.curTeam + 1;
+      const nextTeam = gameState.teams[nextIndex];
+      if (nextTeam.curPlayer) {
+        nextTeam.curPlayer = utils.getNextElement(nextTeam.players, nextTeam.players.findIndex(player => player === nextTeam.curPlayer));
+      } else {
+        nextTeam.curPlayer = utils.getRandomElement(nextTeam.players);
+      }
+      server.gameState = Object.assign({}, gameState, {
+        roundEnd: -1,
+        curTeam: nextIndex,
+        card: undefined
+      });
+      synchronizeGameState(server);
+      server.broadcast({ type: 'END_ROUND' });
+    }
+    console.log('Round Heartbeat', timeLeft);
+  }, 750)
+);
 
 const handleMessage = (socket, message) => {
   try {
@@ -36,9 +89,17 @@ const handleMessage = (socket, message) => {
       socket.sendError('Not registered');
       return;
     }
+    const gameState = socket.server.gameState || {};
+    const isGameStarted = gameState.hasOwnProperty('curTeam');
+    const curTeam = gameState.teams ? gameState.teams[gameState.curTeam] : null;
+    const curPlayer = curTeam ? curTeam.curPlayer : null;
 
     switch (event.type) {
       case 'REGISTER':
+        if (isGameStarted) {
+          socket.sendError('Game already started');
+          return;
+        }
         if (socket.gameData) {
           socket.sendError('Already registered');
           return;
@@ -54,6 +115,10 @@ const handleMessage = (socket, message) => {
         socket.sendSuccess(socket.gameData);
         break;
       case 'CHANGE_TEAM':
+        if (isGameStarted) {
+          socket.sendError('Game already started');
+          return;
+        }
         try {
           addTeamMember(socket, event.data, socket.gameData.name);
         } catch (error) {
@@ -63,24 +128,105 @@ const handleMessage = (socket, message) => {
         socket.sendSuccess(socket.gameData);
         break;
       case 'START_GAME':
-        const gameState = {};
+        if(isGameStarted){
+          socket.sendError('Game already started');
+          return;
+        }
+        // TODO ensure at least 2 players per team
         const teams = groupByTeams(socket.server.clients);
-        gameState.teams = teams;
-        // Assign player positions
-        // Pick starting team
-        // Pick clue giving player
-        // Pick card
-        // Start timer
+        const firstTeamIndex = Math.floor(Math.random() * teams.length);
+        const firstPlayer = utils.getRandomElement(teams[firstTeamIndex].players);
+        teams[firstTeamIndex].curPlayer = firstPlayer;
+        socket.server.gameState = {
+          teams,
+          curTeam: firstTeamIndex
+        }
+        synchronizeGameState(socket.server);
+        console.debug('Starting Game', socket.server.gameState);
+        break;
+      case 'START_ROUND': // Start timer. Display next card
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        if (socket.gameData.name !== curPlayer) {
+          socket.sendError('Not your turn');
+          return;
+        }
+        gameState.roundEnd = Date.now() + LENGTH_OF_ROUND;
+        gameState.roundInterval = startRound(socket.server);
+        socket.server.gameState = drawCard(gameState);
+        synchronizeGameState(socket.server);
         break;
       case 'SKIP': // Display next card.  No points
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        if (socket.gameData.name !== curPlayer) {
+          socket.sendError('Not your turn');
+          return;
+        }
+        gameState.teams[socket.gameData.team].skipped = gameState.teams[socket.gameData.team].skipped.concat(gameState.card.index);
+        socket.server.gameState = drawCard(gameState);
+        synchronizeGameState(socket.server);
         break;
       case 'CORRECT': // Display next card. 1 point
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        if (socket.gameData.name !== curPlayer) {
+          socket.sendError('Not your turn');
+          return;
+        }
+        gameState.teams[socket.gameData.team].correct = gameState.teams[socket.gameData.team].correct.concat(gameState.card.index);
+        socket.server.gameState = drawCard(gameState);
+        synchronizeGameState(socket.server);
         break;
       case 'BUZZ': // Pause timer
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        const timeLeft = gameState.roundEnd - Date.now();
+        gameState.roundEnd = -1;
+        gameState.timeLeft = timeLeft;
+        socket.server.gameState = gameState;
+        synchronizeGameState(socket.server);
+        socket.server.broadcast({ type: 'BUZZ' });
         break;
       case 'BUZZ_INVALID': // Continue timer
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        if (socket.gameData.name !== curPlayer) {
+          socket.sendError('Not your turn');
+          return;
+        }
+        gameState.roundEnd = Date.now() + gameState.timeLeft;
+        socket.server.gameState = gameState;
+        synchronizeGameState(socket.server);
+        socket.server.broadcast({ type: 'CONTINUE' });
         break;
       case 'BUZZ_VALID': // Continue timer display next card
+        if (!isGameStarted) {
+          socket.sendError('Game is not started yet');
+          return;
+        }
+        if (socket.gameData.name !== curPlayer) {
+          socket.sendError('Not your turn');
+          return;
+        }
+        gameState.roundEnd = Date.now() + gameState.timeLeft;
+        socket.server.gameState = gameState;
+        synchronizeGameState(socket.server);
+        socket.server.broadcast({ type: 'CONTINUE' });
+        break;
+      default:
+        console.debug('Unknown TYPE', event.type);
+        socket.sendError(`Unknown TYPE:${event.type}`);
         break;
     }
   } catch (err) {
