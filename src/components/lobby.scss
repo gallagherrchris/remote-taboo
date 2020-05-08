@@ -1,0 +1,57 @@
+
+.lobby-container {
+  & .team-container {
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+
+  & .team {
+    box-sizing: border-box;
+    margin: 1rem .25rem;
+    border: .05rem black solid;
+
+    & > .name {
+      font-weight: 900;
+      margin: 1rem 0.5rem 0.5rem;
+
+      border-bottom: 0.05rem black dashed;
+    }
+
+    & > .players {
+      margin: 0 0.5rem 1rem;
+
+      & > span {
+        display:block;
+        padding-bottom: 0.5rem;
+      }
+    }
+  }
+}
+
+.start {
+  height: 2rem;
+  font-size: 1.3rem;
+}
+
+@media screen and (max-width: 40em) {
+  .team {
+    flex: 0 1 calc(50% - 1em);
+  }
+
+  .start {
+    width: 50%;
+    margin: 1rem;
+  }
+}
+
+@media screen and (min-width: 40em) {
+  .team {
+    flex: 0 1 calc(25% - 1em);
+  }
+
+  .start {
+    width: 25%;
+    margin: 5rem;
+  }
+}

@@ -5,10 +5,13 @@ const noop = () => { };
 const onConnection = (wss, socket, req) => {
   socket.server = wss;
   socket.isAlive = true;
-  socket.sendSuccess = (data) => socket.send(JSON.stringify({ type: 'SUCCESS', data }));
+  socket.sendSuccess = (message) => socket.send(JSON.stringify({ type: 'SUCCESS', message }));
   socket.sendError = (message) => socket.send(JSON.stringify({ type: 'ERROR', message }));
   socket.on('pong', () => socket.isAlive = true);
   socket.on('message', client.handleMessage.bind(null, socket));
+
+  const { roundInterval, ...data } = wss.gameState || {};
+  socket.send(JSON.stringify({ type: 'CONNECT', data }));
 };
 
 const pollClients = (wss) => (

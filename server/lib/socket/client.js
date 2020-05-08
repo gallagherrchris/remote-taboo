@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const utils = require('../utils');
 const cards = require('../cards').map((card, index) => Object.assign(card, { index }));
 
+// TODO reset timer to 1 minute
 const LENGTH_OF_ROUND = 10 * 1000; // 1 minute in ms
 
 const addTeamMember = (socket, team, name) => {
@@ -17,15 +18,15 @@ const addTeamMember = (socket, team, name) => {
   socket.gameData = { team, name };
 };
 
-const groupByTeams = ([...clients]) => {
-  return clients.reduce((teams, cur) => {
+const groupByTeams = ([...clients]) => (
+  clients.reduce((teams, cur) => {
     if (cur.readyState !== WebSocket.OPEN || !cur.gameData) {
       return teams;
     }
     const existingTeamIndex = teams.findIndex(team => team.name === cur.gameData.team);
     if (existingTeamIndex >= 0) {
       teams[existingTeamIndex] = Object.assign({}, teams[existingTeamIndex], {
-        players: teams[existingTeamIndex].players.concat(cur.name)
+        players: teams[existingTeamIndex].players.concat(cur.gameData.name)
       });
       return teams;
     } else {
@@ -36,8 +37,8 @@ const groupByTeams = ([...clients]) => {
         skipped: []
       });
     }
-  }, []);
-};
+  }, []).sort((a, b) => a.name.localeCompare(b.name))
+);
 
 const synchronizeGameState = (server) => {
   const { roundInterval, ...data } = server.gameState;
@@ -74,11 +75,12 @@ const startRound = (server) => (
         curTeam: nextIndex,
         card: undefined
       });
-      synchronizeGameState(server);
+      // TODO resynchronize after round ends
+      // synchronizeGameState(server);
       server.broadcast({ type: 'END_ROUND' });
     }
     console.log('Round Heartbeat', timeLeft);
-  }, 750)
+  }, 500)
 );
 
 const handleMessage = (socket, message) => {
@@ -91,20 +93,26 @@ const handleMessage = (socket, message) => {
     }
     const gameState = socket.server.gameState || {};
     const isGameStarted = gameState.hasOwnProperty('curTeam');
+    const isRoundStarted = gameState.roundEnd > 0;
     const curTeam = gameState.teams ? gameState.teams[gameState.curTeam] : null;
     const curPlayer = curTeam ? curTeam.curPlayer : null;
 
     switch (event.type) {
       case 'REGISTER':
         if (isGameStarted) {
-          socket.sendError('Game already started');
-          return;
+          // TODO Uncomment to prevent restarting game
+          // socket.sendError('Game already started');
+          // return;
         }
         if (socket.gameData) {
           socket.sendError('Already registered');
           return;
         }
         const { team, name } = event.data;
+        if (!team || !name) {
+          socket.sendError('Team and Name are required');
+          return;
+        }
         try {
           addTeamMember(socket, team, name);
         } catch (error) {
@@ -112,7 +120,15 @@ const handleMessage = (socket, message) => {
           return;
         };
         console.debug('Registered', socket.gameData);
-        socket.sendSuccess(socket.gameData);
+        if ((socket.server.gameState || {}).roundInterval) {
+          clearInterval(socket.server.gameState.roundInterval);
+        }
+        socket.server.gameState = { teams: groupByTeams(socket.server.clients) };
+        synchronizeGameState(socket.server);
+        socket.sendSuccess(`Registered as ${name} on team ${team}`);
+        break;
+      case 'REJOIN':
+        // TODO Implement rejoining in middle of game
         break;
       case 'CHANGE_TEAM':
         if (isGameStarted) {
@@ -125,18 +141,32 @@ const handleMessage = (socket, message) => {
           socket.sendError(error.message);
           return;
         }
-        socket.sendSuccess(socket.gameData);
+        socket.server.gameState = { teams: groupByTeams(socket.server.clients) };
+        synchronizeGameState(socket.server);
+        socket.sendSuccess(`Changed to team ${socket.gameData.team}`);
         break;
       case 'START_GAME':
-        if(isGameStarted){
+        if (isGameStarted) {
           socket.sendError('Game already started');
           return;
         }
-        // TODO ensure at least 2 players per team
-        const teams = groupByTeams(socket.server.clients);
-        const firstTeamIndex = Math.floor(Math.random() * teams.length);
-        const firstPlayer = utils.getRandomElement(teams[firstTeamIndex].players);
+        const { teams } = socket.server.gameState;
+        for (const team of teams) {
+          if (team.players.length < 2) {
+            socket.sendError('All teams need at least 2 players.');
+            return;
+          }
+        }
+
+        // TODO restore random first round selection
+        // const firstTeamIndex = Math.floor(Math.random() * teams.length);
+        // const firstPlayer = utils.getRandomElement(teams[firstTeamIndex].players);
+        const firstTeamIndex = 0;
+        const firstPlayer = teams[firstTeamIndex].players[0];
         teams[firstTeamIndex].curPlayer = firstPlayer;
+        if ((socket.server.gameState || {}).roundInterval) {
+          clearInterval(socket.server.gameState.roundInterval);
+        }
         socket.server.gameState = {
           teams,
           curTeam: firstTeamIndex
@@ -167,7 +197,7 @@ const handleMessage = (socket, message) => {
           socket.sendError('Not your turn');
           return;
         }
-        gameState.teams[socket.gameData.team].skipped = gameState.teams[socket.gameData.team].skipped.concat(gameState.card.index);
+        curTeam.skipped = curTeam.skipped.concat(gameState.card.index);
         socket.server.gameState = drawCard(gameState);
         synchronizeGameState(socket.server);
         break;
@@ -180,7 +210,7 @@ const handleMessage = (socket, message) => {
           socket.sendError('Not your turn');
           return;
         }
-        gameState.teams[socket.gameData.team].correct = gameState.teams[socket.gameData.team].correct.concat(gameState.card.index);
+        curTeam.correct = curTeam.correct.concat(gameState.card.index);
         socket.server.gameState = drawCard(gameState);
         synchronizeGameState(socket.server);
         break;
@@ -189,12 +219,19 @@ const handleMessage = (socket, message) => {
           socket.sendError('Game is not started yet');
           return;
         }
+        if (!isRoundStarted) {
+          socket.sendError('Cannot buzz before round starts');
+          return;
+        }
+        // TODO Check if player is not on current team
         const timeLeft = gameState.roundEnd - Date.now();
+        clearInterval(gameState.roundInterval);
         gameState.roundEnd = -1;
         gameState.timeLeft = timeLeft;
+        gameState.buzzer = socket.gameData.name;
         socket.server.gameState = gameState;
         synchronizeGameState(socket.server);
-        socket.server.broadcast({ type: 'BUZZ' });
+        socket.server.broadcast({ type: 'BUZZ', data: { buzzer: gameState.buzzer } });
         break;
       case 'BUZZ_INVALID': // Continue timer
         if (!isGameStarted) {
@@ -206,6 +243,9 @@ const handleMessage = (socket, message) => {
           return;
         }
         gameState.roundEnd = Date.now() + gameState.timeLeft;
+        delete gameState.buzzer;
+        delete gameState.timeLeft
+        gameState.roundInterval = startRound(socket.server);
         socket.server.gameState = gameState;
         synchronizeGameState(socket.server);
         socket.server.broadcast({ type: 'CONTINUE' });
@@ -219,8 +259,12 @@ const handleMessage = (socket, message) => {
           socket.sendError('Not your turn');
           return;
         }
+        curTeam.skipped = curTeam.skipped.concat(gameState.card.index);
         gameState.roundEnd = Date.now() + gameState.timeLeft;
-        socket.server.gameState = gameState;
+        delete gameState.buzzer;
+        delete gameState.timeLeft
+        gameState.roundInterval = startRound(socket.server);
+        socket.server.gameState = drawCard(gameState);
         synchronizeGameState(socket.server);
         socket.server.broadcast({ type: 'CONTINUE' });
         break;

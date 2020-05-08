@@ -30,9 +30,10 @@ const wss = new WebSocket.Server({
   clientTracking: true
 });
 wss.broadcast = (message) => {
-  for(const client of wss.clients) {
-    if(client.readyState === WebSocket.OPEN){
-      client.send(JSON.stringify(message));
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      const userMessage = Object.assign({}, message, { data: { ...message.data, user: client.gameData } });
+      client.send(JSON.stringify(userMessage));
     }
   }
 };

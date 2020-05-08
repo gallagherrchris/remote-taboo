@@ -1,0 +1,89 @@
+.game-container {
+
+  & .score-cards {
+    display:flex;
+    flex-direction: row;
+    justify-content: center;
+
+    & .team {
+      display: flex;
+      flex-direction: column;
+      // border: 0.05rem black solid;
+      margin: 0 .5rem;
+
+      & *:first-child {
+        border-bottom: 0.05rem black dashed;
+        margin: 0 2rem 0.5rem;
+      }
+
+      & *:last-child {
+        margin: 0;
+      }
+
+      & .active:after {
+          content: 'Guessing';
+          font-size: .70rem;
+          font-weight: 300;
+          display: block;
+      }
+
+      & .inactive:after {
+        content: '\00a0';
+        font-size: .75rem;
+        display: block;
+      }
+    }
+  }
+
+  & .game-card {
+    margin: 1.5rem 25%;
+    background-color: #eee;
+
+    & .word {
+      font-size: 2.5rem;
+      font-weight: 900;
+      padding-top: 1rem;
+    }
+
+    & .taboo-list {
+      font-size: 1.5rem;
+      padding-bottom: 1rem;
+
+      & .taboo-word {
+        margin:0;
+      }
+    }
+  }
+
+  & .buzz-button {
+    height: 7rem;
+    background-color: #f26d21;
+  }
+
+  & .buzz-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    & article {
+      display:flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      & button {
+        height: 2.5rem;
+        margin: 0 1rem;
+        font-size: 1.5rem;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 40em) {
+  .game-container .buzz-container article button {
+    font-size: 1.1rem;
+    height: 2rem;
+    margin: 0.5rem 1rem;
+  }
+}
