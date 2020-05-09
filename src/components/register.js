@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Register = ({ sendMessage }) => {
-  const [inputs, setInputs] = useState({ team: '', name: '' });
+  const [inputs, setInputs] = useState({
+    team: localStorage.getItem('team'),
+    name: localStorage.getItem('name')
+  });
 
   const handleInput = (event) => {
     event.persist();
@@ -12,20 +15,27 @@ const Register = ({ sendMessage }) => {
     event.preventDefault();
     console.log('Submitting', inputs.team, inputs.name);
     sendMessage({ type: 'REGISTER', data: inputs });
+
+    localStorage.setItem('team', inputs.team);
+    localStorage.setItem('name', inputs.name)
   };
 
   return (
     <div>
-      <h1>Hello World</h1>
+      <h1>Remote Taboo</h1>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="team">
-          Team:
+        <section className="input">
+          <label htmlFor="team">
+            Team:
           <input id="team" type="text" value={inputs.team} onChange={handleInput} required />
-        </label>
-        <label htmlFor="name">
-          Name:
+          </label>
+        </section>
+        <section className="input">
+          <label htmlFor="name">
+            Name:
           <input id="name" type="text" value={inputs.name} onChange={handleInput} required />
-        </label>
+          </label>
+        </section>
 
         <input type="submit" value="Register" />
       </form>

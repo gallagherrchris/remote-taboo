@@ -4,7 +4,6 @@ import Register from './components/register';
 import Lobby from './components/lobby';
 import Game from './components/game';
 
-console.log('NODE_ENV', process.env.NODE_ENV);
 const devSocket = `ws://${document.location.hostname}:8080`;
 const prodSocket = `wss://${document.location.hostname}`;
 const socket = new WebSocket(process.env.NODE_ENV === 'development' ? devSocket : prodSocket);
@@ -13,13 +12,14 @@ const App = () => {
   const [gameState, setGameState] = useState({});
   const [toast, setToast] = useState({});
 
-  const showToast = (message, type) => {
-    setToast({ type, message });
-    setTimeout(() => setToast({}), 3000);
-  };
+  useEffect(() => {
+    if (!!toast.message) {
+      const timer = setTimeout(() => setToast({}), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleMessage = (event) => {
-    console.log('Handling Message', event);
     try {
       const message = JSON.parse(event.data);
       switch (message.type) {
@@ -27,28 +27,37 @@ const App = () => {
           setGameState(message.data);
           break;
         case 'SUCCESS':
-          showToast(message.message, 'success');
+          setToast({ message: message.message, type: 'success' });
           break;
         case 'ERROR':
-          showToast(message.message, 'error');
+          setToast({ message: message.message, type: 'error' });
           break;
         case 'BUZZ':
-          showToast(`${message.data.buzzer} buzzed!`, 'success');
+          setToast({ message: `${message.data.buzzer} buzzed!`, type: 'info' });
           break;
         case 'CONTINUE':
-          showToast('Round is resuming', 'success');
+          setToast({ message: 'Round is resuming', type: 'info' });
           break;
         case 'END_ROUND':
-          showToast('Round over switching teams', 'success');
+          setToast({ message: 'Round over switching teams', type: 'info' });
           break;
         case 'OUT_OF_CARDS':
-          showToast('Out of cards. Ending game');
+          setToast({ message: 'Out of cards', type: 'info' });
           break;
         case 'END_GAME':
-          showToast('Game over');
+          setToast({ message: 'Game over', type: 'info' });
           break;
         case 'CONNECT':
-          console.log('Game State', message);
+          console.debug('Game State', message);
+          break;
+        case 'CLOSED':
+          setToast({ message: `${message.data.name} has left the game`, type: 'info' });
+          break;
+        case 'REJOIN':
+          setToast({ message: `${message.data.name} has rejoined the game`, type: 'info' });
+          break;
+        default:
+          console.log('Ignoring server message', message);
           break;
       }
     } catch (error) {
@@ -59,27 +68,27 @@ const App = () => {
   useEffect(() => {
     socket.onerror = (event) => {
       console.error(event);
-      showToast('Error connecting to server', 'error');
+      setToast({ message: 'Error connecting to server', type: 'error' });
     };
     socket.onclose = (event) => {
       setGameState({});
-      showToast('Connection to server lost', 'error');
+      setToast({ message: 'Connection to server lost', type: 'error' });
       // console.log(event);
-      // if (!toast.message) {
-      //   showToast('Connection closed. Reconnecting in 3 seconds', 'error');
-      //   setTimeout(() => window.location.reload(false), 3000);
-      // }
+      if (!toast.message) {
+        setToast({ message: 'Connection closed. Reconnecting in 3 seconds', type: 'error' });
+        setTimeout(() => window.location.reload(false), 3000);
+      }
     };
 
     socket.onmessage = handleMessage;
     return () => {
       socket.close();
     }
-  }, [socket]);
+  }, []);
 
   const sendMessage = (message) => {
     if (socket.readyState !== WebSocket.OPEN) {
-      showToast('Connection Lost. Reconnecting in 3 seconds.', 'error');
+      setToast({ message: 'Connection Lost. Reconnecting in 3 seconds.', type: 'error' });
       setTimeout(() => window.location.reload(false), 2750);
       return;
     }

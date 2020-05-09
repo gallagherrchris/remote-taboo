@@ -29,6 +29,7 @@ const wss = new WebSocket.Server({
   server: httpServer,
   clientTracking: true
 });
+wss.gameState = {};
 wss.broadcast = (message) => {
   for (const client of wss.clients) {
     if (client.readyState === WebSocket.OPEN) {
