@@ -3,7 +3,7 @@ const utils = require('../utils');
 const cards = require('../cards').map((card, index) => Object.assign(card, { index }));
 
 // TODO reset timer to 1 minute
-const LENGTH_OF_ROUND = 10 * 1000; // 1 minute in ms
+const LENGTH_OF_ROUND = 60 * 1000; // 1 minute in ms
 
 const addTeamMember = (socket, team, name) => {
   for (const client of socket.server.clients) {
@@ -77,7 +77,6 @@ const startRound = (server) => (
         curTeam: nextIndex,
         card: undefined
       });
-      // TODO resynchronize after round ends
       synchronizeGameState(server);
       server.broadcast({ type: 'END_ROUND' });
     }
@@ -119,8 +118,8 @@ const handleMessage = (socket, message) => {
       case 'REGISTER':
         if (isGameStarted) {
           // TODO Uncomment to prevent restarting game
-          // socket.sendError('Game already started');
-          // return;
+          socket.sendError('Game already started');
+          return;
         }
         if (socket.gameData) {
           socket.sendError('Already registered');
@@ -177,10 +176,10 @@ const handleMessage = (socket, message) => {
         }
 
         // TODO restore random first round selection
-        // const firstTeamIndex = Math.floor(Math.random() * teams.length);
-        // const firstPlayer = utils.getRandomElement(teams[firstTeamIndex].players);
-        const firstTeamIndex = 0;
-        const firstPlayer = teams[firstTeamIndex].players[0];
+        const firstTeamIndex = Math.floor(Math.random() * teams.length);
+        const firstPlayer = utils.getRandomElement(teams[firstTeamIndex].players);
+        // const firstTeamIndex = 0;
+        // const firstPlayer = teams[firstTeamIndex].players[0];
         teams[firstTeamIndex].curPlayer = firstPlayer;
         if ((socket.server.gameState || {}).roundInterval) {
           clearInterval(socket.server.gameState.roundInterval);
@@ -205,7 +204,7 @@ const handleMessage = (socket, message) => {
         gameState.roundInterval = startRound(socket.server);
         socket.server.gameState = drawCard(socket.server);
         synchronizeGameState(socket.server);
-        console.log('Starting round', socket.server.gameState);
+        console.debug('Starting round', socket.server.gameState);
         break;
       case 'SKIP': // Display next card.  No points
         if (!isGameStarted) {
@@ -242,7 +241,10 @@ const handleMessage = (socket, message) => {
           socket.sendError('Cannot buzz before round starts');
           return;
         }
-        // TODO Check if player is not on current team
+        if(curTeam.name === socket.gameData.team){
+          socket.sendError('Cannot buzz your own team');
+          return;
+        }
         const timeLeft = gameState.roundEnd - Date.now();
         clearInterval(gameState.roundInterval);
         gameState.roundEnd = -1;

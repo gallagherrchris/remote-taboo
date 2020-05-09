@@ -5,7 +5,6 @@ const Timer = ({ gameState: { roundEnd, timeLeft } }) => {
   const [remainingTime, setTimeLeft] = useState(roundEnd - Date.now());
 
   useEffect(() => {
-    console.log('Timer updating interval');
     const interval = setInterval(() => {
       const remaining = roundEnd - Date.now();
       if (remaining < 0) {

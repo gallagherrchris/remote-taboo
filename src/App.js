@@ -30,14 +30,12 @@ const App = () => {
           showToast(message.message, 'error');
           break;
         case 'BUZZ':
-          console.log('BUZZ', gameState);
           showToast(`${message.data.buzzer} buzzed!`, 'success');
           break;
         case 'CONTINUE':
           showToast('Round is resuming', 'success');
           break;
         case 'END_ROUND':
-          console.log('Round Over');
           showToast('Round over switching teams', 'success');
           break;
         case 'OUT_OF_CARDS':
@@ -56,7 +54,6 @@ const App = () => {
   };
 
   useEffect(() => {
-    console.log('Socket Effect');
     socket.onerror = (event) => {
       console.error(event);
       showToast('Error connecting to server', 'error');
@@ -83,7 +80,6 @@ const App = () => {
       setTimeout(() => window.location.reload(false), 2750);
       return;
     }
-    console.log('Sending Message', message);
     socket.send(JSON.stringify(message));
   };
 
