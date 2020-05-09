@@ -1,9 +1,0 @@
-#!/usr/bin/env node
-
-const sequelize = require('../server/lib/db');
-
-const Game = require('../server/models/game');
-const Player = require('../server/models/player');
-const Card = require('../server/models/card');
-
-sequelize.sync({ force: true }).finally(() => process.exit());
