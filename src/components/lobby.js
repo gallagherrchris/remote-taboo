@@ -1,7 +1,8 @@
 import React from 'react';
 import './lobby.scss';
+import GameResults from './gameResults';
 
-const Lobby = ({ sendMessage, gameState: { teams, user } }) => {
+const Lobby = ({ sendMessage, gameState: { teams, user, gameResults } }) => {
 
   const changeTeam = (team, event) => {
     event.preventDefault();
@@ -29,6 +30,7 @@ const Lobby = ({ sendMessage, gameState: { teams, user } }) => {
         ))}
       </section>
       <button className="start" type="button" onClick={startGame}>Start Game</button>
+      <GameResults results={gameResults} />
     </div>
   )
 };

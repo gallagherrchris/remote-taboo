@@ -4,7 +4,7 @@ import Register from './components/register';
 import Lobby from './components/lobby';
 import Game from './components/game';
 
-const socket = new WebSocket(`ws://${document.location.hostname}:8080`);
+const socket = new WebSocket(`ws://${document.location.hostname}`);
 
 const App = () => {
   const [gameState, setGameState] = useState({});
@@ -39,6 +39,12 @@ const App = () => {
         case 'END_ROUND':
           console.log('Round Over');
           showToast('Round over switching teams', 'success');
+          break;
+        case 'OUT_OF_CARDS':
+          showToast('Out of cards. Ending game');
+          break;
+        case 'END_GAME':
+          showToast('Game over');
           break;
         case 'CONNECT':
           console.log('Game State', message);
@@ -99,7 +105,7 @@ const App = () => {
   return (
     <div className="App">
       {getMode()}
-      <pre>{JSON.stringify(gameState, null, 2)}</pre>
+      {/* <pre>{JSON.stringify(gameState, null, 2)}</pre> */}
       <div id="toast" className={toastClasses.join(' ')}>{toast.message}</div>
     </div>
   );

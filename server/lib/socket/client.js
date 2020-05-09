@@ -45,11 +45,13 @@ const synchronizeGameState = (server) => {
   server.broadcast({ type: 'GAME_STATE', data });
 };
 
-const drawCard = (gameState) => {
+const drawCard = (server) => {
+  const { gameState } = server;
   const usedCards = gameState.teams.reduce((used, curTeam) => used.concat(curTeam.correct.concat(curTeam.skipped)), []);
   const availableCards = cards.filter((card) => !usedCards.includes(card.index));
   if (availableCards.length < 1) {
     console.error('Out of cards');
+    server.broadcast({ type: 'OUT_OF_CARDS' });
     return null;
   }
   return Object.assign({}, gameState, {
@@ -76,12 +78,28 @@ const startRound = (server) => (
         card: undefined
       });
       // TODO resynchronize after round ends
-      // synchronizeGameState(server);
+      synchronizeGameState(server);
       server.broadcast({ type: 'END_ROUND' });
     }
     console.log('Round Heartbeat', timeLeft);
   }, 500)
 );
+
+const endGame = (server) => {
+  const { gameState, clients } = server;
+  const gameResults = gameState.teams.map(team => (
+    {
+      name: team.name,
+      players: team.players,
+      skipped: team.skipped.map(id => cards.find(card => card.index === id).word),
+      correct: team.correct.map(id => cards.find(card => card.index === id).word)
+    }
+  ));
+  return {
+    teams: groupByTeams(clients),
+    gameResults
+  };
+};
 
 const handleMessage = (socket, message) => {
   try {
@@ -185,8 +203,9 @@ const handleMessage = (socket, message) => {
         }
         gameState.roundEnd = Date.now() + LENGTH_OF_ROUND;
         gameState.roundInterval = startRound(socket.server);
-        socket.server.gameState = drawCard(gameState);
+        socket.server.gameState = drawCard(socket.server);
         synchronizeGameState(socket.server);
+        console.log('Starting round', socket.server.gameState);
         break;
       case 'SKIP': // Display next card.  No points
         if (!isGameStarted) {
@@ -198,7 +217,7 @@ const handleMessage = (socket, message) => {
           return;
         }
         curTeam.skipped = curTeam.skipped.concat(gameState.card.index);
-        socket.server.gameState = drawCard(gameState);
+        socket.server.gameState = drawCard(socket.server);
         synchronizeGameState(socket.server);
         break;
       case 'CORRECT': // Display next card. 1 point
@@ -211,7 +230,7 @@ const handleMessage = (socket, message) => {
           return;
         }
         curTeam.correct = curTeam.correct.concat(gameState.card.index);
-        socket.server.gameState = drawCard(gameState);
+        socket.server.gameState = drawCard(socket.server);
         synchronizeGameState(socket.server);
         break;
       case 'BUZZ': // Pause timer
@@ -267,6 +286,12 @@ const handleMessage = (socket, message) => {
         socket.server.gameState = drawCard(gameState);
         synchronizeGameState(socket.server);
         socket.server.broadcast({ type: 'CONTINUE' });
+        break;
+      case 'END_GAME':
+        socket.server.gameState = endGame(socket.server);
+        synchronizeGameState(socket.server);
+        socket.server.broadcast({ type: 'END_GAME' });
+        console.debug('Game over', socket.server.gameState);
         break;
       default:
         console.debug('Unknown TYPE', event.type);

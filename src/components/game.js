@@ -19,6 +19,18 @@ const Game = ({ sendMessage, gameState }) => {
     sendMessage({ type: 'BUZZ_VALID' });
   };
 
+  const correct = () => {
+    sendMessage({ type: 'CORRECT' });
+  };
+
+  const skip = () => {
+    sendMessage({ type: 'SKIP' });
+  };
+
+  const endGame = () => {
+    sendMessage({ type: 'END_GAME' });
+  };
+
   const curTeam = gameState.teams[gameState.curTeam];
   const isOnCurrentTeam = gameState.user.team === curTeam.name;
   const isCurrentPlayer = gameState.user.name === curTeam.curPlayer;
@@ -42,11 +54,22 @@ const Game = ({ sendMessage, gameState }) => {
       if (!isOnCurrentTeam) {
         return <button className="start buzz-button" type="button" onClick={buzz}>BUZZ!</button>
       }
+      if (isCurrentPlayer) {
+        return (
+          <section className="button-container">
+            <p></p>
+            <article>
+              <button className="skip" type="button" onClick={skip}>SKIP</button>
+              <button className="correct" type="button" onClick={correct}>CORRECT</button>
+            </article>
+          </section>
+        )
+      }
     } else {
       // Buzz paused state
       if (isCurrentPlayer) {
         return (
-          <section className="buzz-container">
+          <section className="button-container">
             <p><span className="player">{gameState.buzzer}</span> has accussed you of using a taboo word</p>
             <article>
               <button className="invalid" type="button" onClick={invalidBuzz}>Invalid BUZZ</button>
@@ -62,7 +85,17 @@ const Game = ({ sendMessage, gameState }) => {
 
   const displayStart = () => {
     if (isCurrentPlayer && !gameState.card) {
-      return <button className="start" type="button" onClick={startRound}>Start Round</button>
+      return (
+        <section className="button-container">
+          <p></p>
+          <article>
+            <button className="end" type="button" onClick={endGame}>End Game</button>
+            <button className="start" type="button" onClick={startRound}>Start Round</button>
+          </article>
+        </section>
+      );
+    } else {
+      return <p>Waiting for <span className="player">{curTeam.curPlayer}</span> to start the round</p>
     }
   }
 

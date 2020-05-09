@@ -1,0 +1,8 @@
+.kvp {
+  display: flex;
+  flex-direction: column;
+
+  & .label {
+    font-weight: 700;
+  }
+}
