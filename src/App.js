@@ -4,7 +4,10 @@ import Register from './components/register';
 import Lobby from './components/lobby';
 import Game from './components/game';
 
-const socket = new WebSocket(`wss://${document.location.hostname}`);
+console.log('NODE_ENV', process.env.NODE_ENV);
+const devSocket = `ws://${document.location.hostname}:8080`;
+const prodSocket = `wss://${document.location.hostname}`;
+const socket = new WebSocket(process.env.NODE_ENV === 'development' ? devSocket : prodSocket);
 
 const App = () => {
   const [gameState, setGameState] = useState({});
