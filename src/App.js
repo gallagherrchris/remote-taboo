@@ -67,16 +67,13 @@ const App = () => {
 
   useEffect(() => {
     socket.onerror = (event) => {
-      console.error(event);
+      event.target.isError = true;
       setToast({ message: 'Error connecting to server', type: 'error' });
     };
     socket.onclose = (event) => {
       setGameState({});
-      setToast({ message: 'Connection to server lost', type: 'error' });
-      // console.log(event);
-      if (!toast.message) {
-        setToast({ message: 'Connection closed. Reconnecting in 3 seconds', type: 'error' });
-        setTimeout(() => window.location.reload(false), 3000);
+      if (!event.target.isError) {
+        setToast({ message: 'Connection to server lost', type: 'error' });
       }
     };
 
@@ -87,12 +84,16 @@ const App = () => {
   }, []);
 
   const sendMessage = (message) => {
-    if (socket.readyState !== WebSocket.OPEN) {
-      setToast({ message: 'Connection Lost. Reconnecting in 3 seconds.', type: 'error' });
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message));
+      return;
+    }
+    if (socket.readyState !== WebSocket.CONNECTING) {
+      setToast({ message: 'Connection closed. Reconnecting in 3 seconds.', type: 'error' });
       setTimeout(() => window.location.reload(false), 2750);
       return;
     }
-    socket.send(JSON.stringify(message));
+    setToast({ message: 'Connecting...', type: 'info' });
   };
 
   const toastClasses = [
