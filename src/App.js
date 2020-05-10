@@ -22,6 +22,7 @@ const App = () => {
   const handleMessage = (event) => {
     try {
       const message = JSON.parse(event.data);
+      console.log('Handling Message', message);
       switch (message.type) {
         case 'GAME_STATE':
           setGameState(message.data);

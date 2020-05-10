@@ -29,15 +29,20 @@ const wss = new WebSocket.Server({
   server: httpServer,
   clientTracking: true
 });
-wss.gameState = {};
-wss.broadcast = (message) => {
+wss.games = {};
+wss.broadcast = (game, message) => {
   for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN && (client.gameData || {}).game === game) {
       const userMessage = Object.assign({}, message, { data: { ...message.data, user: client.gameData } });
       client.send(JSON.stringify(userMessage));
     }
   }
 };
+wss.updateGameState = (game, gameState) => {
+  wss.games[game] = Object.freeze(gameState);
+  const { roundInterval, ...data } = wss.games[game] || {};
+  wss.broadcast(game, { type: 'GAME_STATE', data });
+}
 
 wss.on('connection', socketHandler.onConnection.bind(null, wss));
 const clientPoll = socketHandler.pollClients(wss);

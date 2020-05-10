@@ -1,0 +1,31 @@
+.registration-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  & .registration {
+    display: flex;
+    flex-direction: column;
+
+    & .input {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      & > * {
+        margin: 0.5rem 1rem;
+      }
+
+      & label {
+        flex: 1 1 100%;
+        max-width: 30%;
+        text-align: left;
+      }
+    }
+
+    & button {
+      width: 50%;
+      margin-left: 5rem;
+    }
+  }
+}
