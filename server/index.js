@@ -6,6 +6,8 @@ const WebSocket = require('ws');
 
 const socketHandler = require('./lib/socket');
 
+const nodeEnv = process.env.NODE_ENV;
+console.log('ENV', nodeEnv);
 const port = process.env.PORT || 8080;
 const app = express();
 
