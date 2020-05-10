@@ -3,6 +3,7 @@ const utils = require('../utils');
 const cards = require('../cards').map((card, index) => Object.assign(card, { index }));
 
 const LENGTH_OF_ROUND = 60 * 1000; // 1 minute in ms
+const isDev = process.env.NODE_ENV === 'development';
 
 const addTeamMember = (clients, team, name) => {
   for (const client of clients) {
@@ -232,11 +233,8 @@ const handleMessage = (socket, message) => {
           }
         }
 
-        // TODO restore random selection
-        // const firstTeamIndex = Math.floor(Math.random() * gameState.teams.length);
-        // const firstPlayer = utils.getRandomElement(gameState.teams[firstTeamIndex].players);
-        const firstTeamIndex = 0;
-        const firstPlayer = gameState.teams[0].players[0];
+        const firstTeamIndex = isDev ? 0 : Math.floor(Math.random() * gameState.teams.length);
+        const firstPlayer = isDev ? gameState.teams[firstTeamIndex].players[0] : utils.getRandomElement(gameState.teams[firstTeamIndex].players);
         gameState.teams[firstTeamIndex].curPlayer = firstPlayer;
         if (gameState.roundInterval) {
           clearInterval(gameState.roundInterval);
