@@ -41,7 +41,7 @@ const handleMessage = (socket, message) => {
         break;
       case 'BUZZ_INVALID':
       case 'BUZZ_VALID':
-        newGameState = gameUtils.buzzContinue(server, event.type.contains('VALID'), socket.gameData);
+        newGameState = gameUtils.buzzContinue(server, event.type === 'BUZZ_VALID', socket.gameData);
         server.broadcast(socket.gameData.game, { type: 'CONTINUE' });
         break;
       case 'END_GAME':

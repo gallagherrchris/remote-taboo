@@ -1,6 +1,6 @@
 const GameError = require('./gameError');
 
-const LENGTH_OF_ROUND = 60 * 1000; // 1 minute in ms
+const LENGTH_OF_ROUND = (process.env.NODE_ENV === 'development' ? 10 : 60) * 1000; // 1 minute in ms
 
 const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -177,6 +177,7 @@ const startRoundInterval = (server, game) => (
     const timeLeft = currentGame.roundEnd - Date.now();
     if (timeLeft < 1) {
       clearInterval(currentGame.roundInterval);
+      currentGame.teams[currentGame.curTeam].skipped = [].concat(currentGame.teams[currentGame.curTeam].skipped, currentGame.card.index);
       const nextIndex = currentGame.curTeam + 1 >= currentGame.teams.length ? 0 : currentGame.curTeam + 1;
       const nextTeam = currentGame.teams[nextIndex];
       if (nextTeam.curPlayer) {
@@ -284,8 +285,8 @@ const endGame = (server, { game }) => {
     gameResults: currentGame.teams.map(team => ({
       name: team.name,
       players: team.players,
-      skipped: team.skipped.map(id => cards.find(card => card.index === id).word),
-      correct: team.correct.map(id => cards.find(card => card.index === id).word)
+      skipped: team.skipped.map(id => server.cards.find(card => card.index === id).word),
+      correct: team.correct.map(id => server.cards.find(card => card.index === id).word)
     })),
     audience: []
   };
