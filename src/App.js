@@ -115,7 +115,7 @@ const App = () => {
     <div className="App">
       {getMode()}
       {/* <pre>{JSON.stringify(gameState, null, 2)}</pre> */}
-      <div id="toast" className={toastClasses.join(' ')}>{toast.message}</div>
+      <div id="toast" className={toastClasses.join(' ')} onClick={() => setToast({})}>{toast.message}</div>
     </div>
   );
 
