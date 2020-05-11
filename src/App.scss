@@ -37,16 +37,6 @@
   }
 }
 
-.game-code {
-  text-align: right;
-  padding: 0;
-  margin: 1rem 2rem -2.5rem 0;
-
-  & .code {
-    font-weight: 900;
-  }
-}
-
 pre {
   text-align: left;
 }
@@ -95,4 +85,20 @@ pre {
 @keyframes fadeout {
   from {bottom: 30px; opacity: 1;}
   to {bottom: 0; opacity: 0;}
+}
+
+.game-code {
+  text-align: right;
+  padding: 0;
+  margin: 1rem 2rem -2.5rem 0;
+
+  & .code {
+    font-weight: 900;
+  }
+}
+
+@media screen and (max-width: 40em) {
+  .game-code {
+    margin-bottom: -1rem;
+  }
 }
