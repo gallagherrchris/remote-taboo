@@ -8,6 +8,9 @@ const devSocket = `ws://${document.location.hostname}:8080`;
 const prodSocket = `wss://${document.location.hostname}`;
 const socket = new WebSocket(process.env.NODE_ENV === 'development' ? devSocket : prodSocket);
 
+const buzzSound = new Audio(`${document.location.origin}/buzz.mp3`);
+const alarmSound = new Audio(`${document.location.origin}/alarm.mp3`);
+
 const App = () => {
   const [gameState, setGameState] = useState({});
   const [toast, setToast] = useState({});
@@ -33,12 +36,14 @@ const App = () => {
           setToast({ message: message.message, type: 'error' });
           break;
         case 'BUZZ':
+          buzzSound.play();
           setToast({ message: `${message.data.buzzer} buzzed!`, type: 'info' });
           break;
         case 'CONTINUE':
           setToast({ message: 'Round is resuming', type: 'info' });
           break;
         case 'END_ROUND':
+          alarmSound.play();
           setToast({ message: 'Round over switching teams', type: 'info' });
           break;
         case 'OUT_OF_CARDS':
@@ -113,6 +118,7 @@ const App = () => {
 
   return (
     <div className="App">
+      {gameState.user ? <section className="game-code">Game Code <span className="code">{gameState.user.game}</span></section> : null}
       {getMode()}
       {/* <pre>{JSON.stringify(gameState, null, 2)}</pre> */}
       <div id="toast" className={toastClasses.join(' ')} onClick={() => setToast({})}>{toast.message}</div>
