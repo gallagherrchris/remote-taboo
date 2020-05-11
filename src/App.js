@@ -22,7 +22,6 @@ const App = () => {
   const handleMessage = (event) => {
     try {
       const message = JSON.parse(event.data);
-      console.log('Handling Message', message);
       switch (message.type) {
         case 'GAME_STATE':
           setGameState(message.data);
@@ -58,7 +57,7 @@ const App = () => {
           setToast({ message: `${message.data.name} has rejoined the game`, type: 'info' });
           break;
         default:
-          console.log('Ignoring server message', message);
+          console.debug('Ignoring server message', message);
           break;
       }
     } catch (error) {

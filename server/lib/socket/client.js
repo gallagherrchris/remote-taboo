@@ -74,8 +74,7 @@ const handleClose = (socket) => {
   }
   const newGameState = gameUtils.leaveGame(socket.server, socket.gameData);
   if (!newGameState) {
-    const { game } = socket.gameData;
-    const { [game]: _, ...rest } = socket.server.games;
+    const { [socket.gameData.game]: _, ...rest } = socket.server.games;
     socket.server.games = rest;
     return;
   }

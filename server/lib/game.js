@@ -1,5 +1,4 @@
 const GameError = require('./gameError');
-const cards = require('./cards').map((card, index) => Object.assign(card, { index }));
 
 const LENGTH_OF_ROUND = 60 * 1000; // 1 minute in ms
 
@@ -12,9 +11,9 @@ const getNextElement = (arr, curIndex) => {
   return arr[curIndex + 1];
 }
 
-const drawCard = (currentGame) => {
+const drawCard = (allCards, currentGame) => {
   const usedCards = currentGame.teams.reduce((used, curTeam) => used.concat(curTeam.correct.concat(curTeam.skipped)), []);
-  const availableCards = cards.filter((card) => !usedCards.includes(card.index));
+  const availableCards = allCards.filter((card) => !usedCards.includes(card.index));
   if (availableCards.length < 1) {
     throw new GameError('Out of cards');
   }
@@ -206,7 +205,7 @@ const startRound = (server, { game, name }) => {
   console.debug('Starting round', currentGame);
   return Object.assign({}, currentGame, {
     roundEnd: Date.now() + LENGTH_OF_ROUND,
-    card: drawCard(currentGame),
+    card: drawCard(server.cards, currentGame),
     roundInterval: startRoundInterval(server, game)
   });
 };
@@ -249,7 +248,7 @@ const buzzContinue = (server, isValid, { game, name }) => {
   return Object.assign({}, rest, {
     roundEnd: Date.now() + currentGame.timeLeft,
     roundInterval: startRoundInterval(server, game),
-    card: isValid ? drawCard(currentGame) : currentGame.card
+    card: isValid ? drawCard(server.cards, currentGame) : currentGame.card
   });
 };
 
@@ -265,7 +264,7 @@ const nextCard = (server, cardList, { game, name }) => {
   const curTeam = currentGame.teams[currentGame.curTeam];
   curTeam[cardList] = curTeam[cardList].concat(currentGame.card.index);
   return Object.assign({}, currentGame, {
-    card: drawCard(currentGame)
+    card: drawCard(server.cards, currentGame)
   });
 };
 
