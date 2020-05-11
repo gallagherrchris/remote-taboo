@@ -1,6 +1,6 @@
 module.exports = [
   {
-    word: 'Enemy',
+    word: 'enemy',
     taboo: [
       'hate',
       'war',

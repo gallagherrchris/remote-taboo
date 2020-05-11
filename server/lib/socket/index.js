@@ -11,8 +11,8 @@ const onConnection = (wss, socket) => {
   socket.on('message', client.handleMessage.bind(null, socket));
   socket.on('close', client.handleClose.bind(null, socket));
 
-  const { roundInterval, ...data } = wss.gameState || {};
-  socket.send(JSON.stringify({ type: 'CONNECT', data }));
+  // const { roundInterval, ...data } = wss.gameState || {};
+  // socket.send(JSON.stringify({ type: 'CONNECT', data }));
 };
 
 const pollClients = (wss) => (
