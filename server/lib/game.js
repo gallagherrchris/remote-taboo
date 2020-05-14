@@ -205,7 +205,7 @@ const startRound = (server, { game, name }) => {
   }
   console.debug('Starting round', currentGame);
   return Object.assign({}, currentGame, {
-    roundEnd: Date.now() + LENGTH_OF_ROUND,
+    roundEnd: Date.now() + (game === 'test' ? 15 : LENGTH_OF_ROUND),
     card: drawCard(server.cards, currentGame),
     roundInterval: startRoundInterval(server, game)
   });
