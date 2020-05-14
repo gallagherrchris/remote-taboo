@@ -33,7 +33,7 @@ const Register = ({ sendMessage }) => {
           <input id="name" type="text" value={inputs.name} onChange={handleInput} required />
         </section>
 
-        <button type="submit">Register</button>
+        <button type="submit">Join Game</button>
       </form>
     </div>
   )
