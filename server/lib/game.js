@@ -152,6 +152,9 @@ const startGame = (server, { game }) => {
   if (currentGame.isStarted) {
     throw new GameError('Game already started');
   }
+  if (currentGame.teams.length < 2) {
+    throw new GameError('At least 2 teams are needed to start the game');
+  }
   for (const team of currentGame.teams) {
     if (team.players.length < 2) {
       throw new GameError('All teams need at least 2 players');
