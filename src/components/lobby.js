@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './lobby.scss';
 import GameResults from './gameResults';
+import ChangeTeam from './changeTeam';
 
 const NewTeam = ({ changeTeam }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -52,7 +53,7 @@ const Lobby = ({ sendMessage, gameState: { teams, user, gameResults } }) => {
             </p>
           </article>
         ))}
-        <article className="create-team"><NewTeam changeTeam={changeTeam}/></article>
+        <article className="create-team"><ChangeTeam submit={changeTeam} /></article>
       </section>
       <button className="start" type="button" onClick={startGame}>Start Game</button>
       <GameResults results={gameResults} />
