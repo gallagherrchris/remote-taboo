@@ -225,6 +225,9 @@ const buzz = (server, { game, name, team }) => {
   if (currentGame.teams[currentGame.curTeam].name === team) {
     throw new GameError('Cannot buzz your own team');
   }
+  if (!!team) {
+    throw new GameError('Cannot buzz from the audience');
+  }
   clearInterval(currentGame.roundInterval);
   const { roundEnd, ...rest } = currentGame;
   return Object.assign({}, rest, {
@@ -268,7 +271,8 @@ const nextCard = (server, cardList, { game, name }) => {
   const curTeam = currentGame.teams[currentGame.curTeam];
   curTeam[cardList] = curTeam[cardList].concat(currentGame.card.index);
   return Object.assign({}, currentGame, {
-    card: drawCard(server.cards, currentGame)
+    card: drawCard(server.cards, currentGame),
+    lastCard: currentGame.card ? currentGame.card.word : undefined
   });
 };
 
