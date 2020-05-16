@@ -39,6 +39,12 @@ const addPlayer = (server, game, name) => {
   if (!game || !name) {
     throw new GameError('Game and Name are required');
   }
+  if (name.length > 12) {
+    throw new GameError('Name cannot be longer than 12 characters');
+  }
+  if (game.length > 12) {
+    throw new GameError('Game cannot be longer than 12 characters');
+  }
   if (server.terminated) {
     const terminatedIndex = server.terminated.findIndex(terminatedData => terminatedData.name === name && terminatedData.game === game);
     if (terminatedIndex >= 0) {
@@ -65,6 +71,9 @@ const addPlayer = (server, game, name) => {
 const changeTeam = (server, newTeam, { game, name }) => {
   if (!newTeam) {
     throw new GameError('Team is required');
+  }
+  if (newTeam.length > 20) {
+    throw new GameError('Team name cannot be longer than 20 characters');
   }
   let currentGame = getCurrentGame(server, game);
   if (currentGame.isStarted) {

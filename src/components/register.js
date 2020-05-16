@@ -26,11 +26,11 @@ const Register = ({ sendMessage }) => {
       <form className="registration" onSubmit={handleSubmit}>
         <section className="input">
           <label htmlFor="game">Game Code:</label>
-          <input id="game" type="text" value={inputs.game} onChange={handleInput} required />
+          <input id="game" type="text" value={inputs.game} onChange={handleInput} required maxLength="12"/>
         </section>
         <section className="input">
           <label htmlFor="name">Name:</label>
-          <input id="name" type="text" value={inputs.name} onChange={handleInput} required />
+          <input id="name" type="text" value={inputs.name} onChange={handleInput} required maxLength="12" />
         </section>
 
         <button type="submit">Join Game</button>

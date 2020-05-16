@@ -14,7 +14,11 @@ const ChangeTeam = ({ submit }) => {
     <form onSubmit={submitTeamName}>
       <label htmlFor="team-name">
         Team Name
-        <input id="team-name" type="text" value={teamName} required
+        <input id="team-name"
+          type="text"
+          value={teamName}
+          required
+          maxLength="20"
           onChange={({ target }) => setTeamName(target.value)}
           ref={input => input && input.focus()}
         />
