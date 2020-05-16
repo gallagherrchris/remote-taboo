@@ -36,14 +36,18 @@ const App = () => {
           setToast({ message: message.message, type: 'error' });
           break;
         case 'BUZZ':
-          buzzSound.play();
+          if (!gameState.game.toLowerCase().endsWith('quiet')) {
+            buzzSound.play();
+          }
           setToast({ message: `${message.data.buzzer} buzzed!`, type: 'info' });
           break;
         case 'CONTINUE':
-          setToast({ message: 'Round is resuming', type: 'info' });
+          setToast({ message: `${message.data.isValid ? 'Valid' : 'Invalid'} buzz. Resuming...`, type: 'info' });
           break;
         case 'END_ROUND':
-          alarmSound.play();
+          if (!gameState.game.toLowerCase().endsWith('quiet')) {
+            alarmSound.play();
+          }
           setToast({ message: 'Round over switching teams', type: 'info' });
           break;
         case 'OUT_OF_CARDS':
@@ -60,6 +64,10 @@ const App = () => {
           break;
         case 'REJOIN':
           setToast({ message: `${message.data.name} has rejoined the game`, type: 'info' });
+          break;
+        case 'SKIP':
+        case 'CORRECT':
+          setToast({ message: `${message.type === 'CORRECT' ? 'CORRECT' : 'SKIPPED'}`, type: 'info' });
           break;
         default:
           console.debug('Ignoring server message', message);

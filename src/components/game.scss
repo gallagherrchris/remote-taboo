@@ -32,6 +32,10 @@
         font-size: .75rem;
         display: block;
       }
+
+      & .current {
+        font-weight: 900;
+      }
     }
   }
 
@@ -81,6 +85,11 @@
 }
 
 .player {
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+.last-card {
   font-weight: 900;
   font-size: 1.1rem;
 }

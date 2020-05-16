@@ -36,22 +36,34 @@ const Game = ({ sendMessage, gameState }) => {
   const isCurrentPlayer = gameState.user.name === curTeam.curPlayer;
 
   const displayCard = () => {
-    if (!isOnCurrentTeam || isCurrentPlayer) {
-      return <section className="game-card">
-        <p className="word">{gameState.card.word}</p>
-        <article className="taboo-list">
-          {gameState.card.taboo.map(tabooWord => (
-            <p className="taboo-word" key={tabooWord}>{tabooWord}</p>
-          ))}
-        </article>
-      </section>
+    const lastCard = !!gameState.lastCard ? (
+      <p>The last word was <span className="last-card">{gameState.lastCard}</span></p>
+    ) : null;
+    if (gameState.buzzer) {
+      return lastCard;
     }
-    return <p>Your teammate <span className="player">{curTeam.curPlayer}</span> is giving clues</p>;
+    if (!isOnCurrentTeam || isCurrentPlayer) {
+      return <>
+        {lastCard}
+        <section className="game-card">
+          <p className="word">{gameState.card.word}</p>
+          <article className="taboo-list">
+            {gameState.card.taboo.map(tabooWord => (
+              <p className="taboo-word" key={tabooWord}>{tabooWord}</p>
+            ))}
+          </article>
+        </section>
+      </>
+    }
+    return <>
+      {lastCard}
+      <p>Your teammate <span className="player">{curTeam.curPlayer}</span> is giving clues</p>
+    </>;
   }
 
   const displayBuzz = () => {
     if (!gameState.buzzer) {
-      if (!isOnCurrentTeam) {
+      if (!isOnCurrentTeam && !!gameState.user.team) {
         return <button className="start buzz-button" type="button" onClick={buzz}>BUZZ!</button>
       }
       if (isCurrentPlayer) {
@@ -105,7 +117,7 @@ const Game = ({ sendMessage, gameState }) => {
       <section className="score-cards">
         {gameState.teams.map((team, index) => (
           <article className="team" key={team.name}>
-            <p className={gameState.curTeam === index ? 'active' : 'inactive'}>{team.name}</p>
+            <p className={`${gameState.curTeam === index ? 'active' : 'inactive'} ${gameState.user.team === team.name ? 'current' : ''}`}>{team.name}</p>
             <p>{(team.correct || []).length}</p>
           </article>
         ))}
