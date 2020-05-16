@@ -33,7 +33,8 @@ const handleMessage = (socket, message) => {
         break;
       case 'SKIP':
       case 'CORRECT':
-        newGameState = gameUtils.nextCard(server, event.type === 'CORRECT' ? 'correct':'skipped', socket.gameData);
+        newGameState = gameUtils.nextCard(server, event.type === 'CORRECT' ? 'correct' : 'skipped', socket.gameData);
+        server.broadcast(socket.gameData.game, { type: event.type });
         break;
       case 'BUZZ':
         newGameState = gameUtils.buzz(server, socket.gameData);
@@ -41,8 +42,9 @@ const handleMessage = (socket, message) => {
         break;
       case 'BUZZ_INVALID':
       case 'BUZZ_VALID':
-        newGameState = gameUtils.buzzContinue(server, event.type === 'BUZZ_VALID', socket.gameData);
-        server.broadcast(socket.gameData.game, { type: 'CONTINUE' });
+        const isValid = event.type === 'BUZZ_VALID';
+        newGameState = gameUtils.buzzContinue(server, isValid, socket.gameData);
+        server.broadcast(socket.gameData.game, { type: 'CONTINUE', data: { isValid } });
         break;
       case 'END_GAME':
         newGameState = gameUtils.endGame(server, socket.gameData);
