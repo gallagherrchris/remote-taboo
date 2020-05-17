@@ -35,7 +35,7 @@ const getCurrentGame = (server, game) => {
   });
 }
 
-const addPlayer = (server, game, name) => {
+const addPlayer = (server, socket, game, name) => {
   if (!game || !name) {
     throw new GameError('Game and Name are required');
   }
@@ -48,7 +48,14 @@ const addPlayer = (server, game, name) => {
   if (server.terminated) {
     const terminatedIndex = server.terminated.findIndex(terminatedData => terminatedData.name === name && terminatedData.game === game);
     if (terminatedIndex >= 0) {
+      socket.gameData = server.terminated[terminatedIndex];
       server.terminated = [].concat(server.terminated.slice(0, terminatedIndex), server.terminated.slice(terminatedIndex + 1));
+      const currentGame = getCurrentGame(server, game);
+      const teamIndex = currentGame.teams.findIndex(team => team.name === socket.gameData.team);
+      if (teamIndex >= 0) {
+        currentGame.teams[teamIndex].players = [].concat(currentGame.teams[teamIndex].players, socket.gameData.name);
+        return currentGame;
+      }
     }
   }
   if (!server.games[game]) {
@@ -234,7 +241,7 @@ const buzz = (server, { game, name, team }) => {
   if (currentGame.teams[currentGame.curTeam].name === team) {
     throw new GameError('Cannot buzz your own team');
   }
-  if (!!team) {
+  if (!team) {
     throw new GameError('Cannot buzz from the audience');
   }
   clearInterval(currentGame.roundInterval);

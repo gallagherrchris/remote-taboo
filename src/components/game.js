@@ -63,7 +63,7 @@ const Game = ({ sendMessage, gameState }) => {
 
   const displayBuzz = () => {
     if (!gameState.buzzer) {
-      if (!isOnCurrentTeam && !gameState.user.team) {
+      if (!isOnCurrentTeam && !!gameState.user.team) {
         return <button className="start buzz-button" type="button" onClick={buzz}>BUZZ!</button>
       }
       if (isCurrentPlayer) {
@@ -99,7 +99,7 @@ const Game = ({ sendMessage, gameState }) => {
     if (isCurrentPlayer && !gameState.card) {
       return (
         <section className="button-container">
-          <p></p>
+          <p>It is your turn.  Waiting for you to start the round</p>
           <article>
             <button className="end" type="button" onClick={endGame}>End Game</button>
             <button className="start" type="button" onClick={startRound}>Start Round</button>

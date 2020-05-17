@@ -36,14 +36,14 @@ const App = () => {
           setToast({ message: message.message, type: 'error' });
           break;
         case 'BUZZ':
-            buzzSound.play();
+          buzzSound.play();
           setToast({ message: `${message.data.buzzer} buzzed!`, type: 'info' });
           break;
         case 'CONTINUE':
           setToast({ message: `${message.data.isValid ? 'Valid' : 'Invalid'} buzz. Resuming...`, type: 'info' });
           break;
         case 'END_ROUND':
-            alarmSound.play();
+          alarmSound.play();
           setToast({ message: 'Round over switching teams', type: 'info' });
           break;
         case 'OUT_OF_CARDS':

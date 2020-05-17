@@ -14,8 +14,10 @@ const handleMessage = (socket, message) => {
 
     switch (event.type) {
       case 'JOIN_GAME':
-        newGameState = gameUtils.addPlayer(server, event.data.game.toUpperCase(), event.data.name);
-        socket.gameData = { game: event.data.game.toUpperCase(), name: event.data.name };
+        newGameState = gameUtils.addPlayer(server, socket, event.data.game.toUpperCase(), event.data.name);
+        if (!socket.gameData) {
+          socket.gameData = { game: event.data.game.toUpperCase(), name: event.data.name };
+        }
         socket.sendSuccess(`Registered as ${event.data.name}`);
         break;
       case 'CHANGE_TEAM':
