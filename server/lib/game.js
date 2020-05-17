@@ -271,7 +271,8 @@ const buzzContinue = (server, isValid, { game, name }) => {
   return Object.assign({}, rest, {
     roundEnd: Date.now() + currentGame.timeLeft,
     roundInterval: startRoundInterval(server, game),
-    card: isValid ? drawCard(server.cards, currentGame) : currentGame.card
+    card: isValid ? drawCard(server.cards, currentGame) : currentGame.card,
+    lastCard: isValid ? currentGame.card.word : currentGame.lastCard
   });
 };
 
