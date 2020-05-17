@@ -63,7 +63,7 @@ const Game = ({ sendMessage, gameState }) => {
 
   const displayBuzz = () => {
     if (!gameState.buzzer) {
-      if (!isOnCurrentTeam && !!gameState.user.team) {
+      if (!isOnCurrentTeam) {
         return <button className="start buzz-button" type="button" onClick={buzz}>BUZZ!</button>
       }
       if (isCurrentPlayer) {
